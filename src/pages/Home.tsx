@@ -6,6 +6,7 @@ import type { Pg } from '../types'
 export default function Home() {
   const [pgs, setPgs] = useState<Pg[]>([])
   const [city, setCity] = useState('')
+  const [activeCity, setActiveCity] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -14,6 +15,7 @@ export default function Home() {
     setError('')
     try {
       setPgs(await listPgs(cityFilter))
+      setActiveCity(cityFilter ?? '')
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -33,12 +35,18 @@ export default function Home() {
   return (
     <>
       <section className="hero-block">
-        <h1>Find a PG you can trust</h1>
-        <p className="muted">
-          Real reviews from tenants in Gurgaon &amp; Delhi NCR — including
-          whether the owner actually returned the security deposit.
+        <p className="eyebrow">Gurgaon &amp; Delhi NCR</p>
+        <h1>
+          Find a PG you can <em>trust</em>
+        </h1>
+        <p className="hero-sub">
+          Real reviews from real tenants — including the one thing brokers
+          won't tell you: <strong>does the owner return the deposit?</strong>
         </p>
         <form className="search-bar" onSubmit={onSearch}>
+          <span className="search-icon" aria-hidden="true">
+            ⌕
+          </span>
           <input
             type="text"
             placeholder="Search by city, e.g. Gurgaon"
@@ -52,26 +60,47 @@ export default function Home() {
       </section>
 
       {error && <p className="error">{error}</p>}
+
       {loading ? (
-        <p className="muted">Loading PGs…</p>
+        <div className="card-grid">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="card skeleton-card">
+              <div className="skeleton skeleton-title" />
+              <div className="skeleton skeleton-line" />
+            </div>
+          ))}
+        </div>
       ) : pgs.length === 0 ? (
-        <p className="muted">
-          No PGs found{city ? ` for “${city}”` : ''}.{' '}
-          <Link to="/add-pg">Add one?</Link>
-        </p>
+        <div className="empty-state">
+          <p className="empty-icon">🏠</p>
+          <h2>No PGs found{activeCity ? ` for “${activeCity}”` : ''}</h2>
+          <p className="muted">
+            Know a PG that should be here?{' '}
+            <Link to="/add-pg">Add it and leave the first review.</Link>
+          </p>
+        </div>
       ) : (
-        <ul className="card-list">
-          {pgs.map((pg) => (
-            <li key={pg.id} className="card">
-              <Link to={`/pgs/${pg.id}`} className="card-link">
-                <h2>{pg.name}</h2>
+        <>
+          <div className="list-heading">
+            <h2>
+              {activeCity ? `PGs in “${activeCity}”` : 'All PGs'}{' '}
+              <span className="count-pill">{pgs.length}</span>
+            </h2>
+          </div>
+          <div className="card-grid">
+            {pgs.map((pg) => (
+              <Link key={pg.id} to={`/pgs/${pg.id}`} className="card pg-card">
+                <h3>{pg.name}</h3>
                 <p className="muted">
                   {pg.address}, {pg.city}
                 </p>
+                <span className="card-cta">
+                  View reviews <span aria-hidden="true">→</span>
+                </span>
               </Link>
-            </li>
-          ))}
-        </ul>
+            ))}
+          </div>
+        </>
       )}
     </>
   )
